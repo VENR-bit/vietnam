@@ -133,11 +133,76 @@ body{font-family:'Georgia','Times New Roman',serif;background:#faf8f4}
 .pop .pop-desc{font-size:12px;color:#555;line-height:1.6}
 .pop .pop-tr{font-size:11px;color:#6a5acd;margin-top:8px;padding-top:8px;border-top:1px solid #eee}
 
+/* Mobile toggle button */
+.mobile-toggle{
+  display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  z-index:1100;padding:10px 24px;border-radius:28px;border:none;
+  background:linear-gradient(135deg,#3c1518,#2c6e49);color:white;
+  font-size:13px;font-weight:700;font-family:'Segoe UI',sans-serif;
+  box-shadow:0 4px 20px rgba(0,0,0,0.35);cursor:pointer;
+  letter-spacing:0.5px;transition:all 0.3s;
+}
+.mobile-toggle:active{transform:translateX(-50%) scale(0.95)}
+.mobile-toggle.list-open{
+  bottom:auto;top:68px;right:10px;left:auto;transform:none;
+  padding:8px 16px;font-size:12px;background:#e74c3c;
+}
+
+/* Mobile: sidebar as bottom sheet */
 @media(max-width:768px){
-  .sidebar{width:100%;left:0;top:auto;bottom:0;max-height:44vh;border-radius:16px 16px 0 0}
-  .header h1{font-size:16px}
-  .header-right{display:none}
+  .header{padding:10px 14px;flex-direction:column;align-items:flex-start;gap:2px}
+  .header-left h1{font-size:16px}
+  .header-left .sub{font-size:10px}
+  .header-right{display:flex;gap:8px;margin-top:4px}
+  .header-right .pill{padding:3px 8px;font-size:9px}
+
+  .sidebar{
+    width:100%;left:0;right:0;top:auto;bottom:0;
+    max-height:55vh;border-radius:20px 20px 0 0;
+    transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    box-shadow:0 -4px 30px rgba(0,0,0,0.2);
+  }
+  .sidebar.open{transform:translateY(0)}
+  .sidebar::before{
+    content:'';display:block;width:40px;height:4px;
+    background:#ccc;border-radius:2px;margin:10px auto 6px;
+  }
+
+  .card{padding:12px 14px}
+  .card-title{font-size:13.5px}
+  .card-sub{font-size:10px}
+  .tag{font-size:8.5px;padding:2px 6px}
+  .card-body{font-size:12px}
+  .card-transport{font-size:11px;padding:6px 8px}
+  .hl{font-size:9px;padding:2px 7px}
+  .section-head{font-size:10px;padding:8px 14px}
+  .route-connector{height:16px}
+
   .opt-banner{display:none}
+  .info-panel{
+    display:none;
+  }
+
+  .mobile-toggle{display:block}
+
+  .m-pin{width:28px;height:28px;font-size:11px;border:2px solid white}
+
+  .leaflet-popup-content-wrapper{max-width:280px!important}
+  .pop{padding:12px 14px;min-width:200px}
+  .pop h3{font-size:14px}
+  .pop .pop-desc{font-size:11px}
+  .pop .pop-tr{font-size:10px}
+
+  .leaflet-control-zoom{display:none!important}
+}
+
+/* Small phones */
+@media(max-width:400px){
+  .header-left h1{font-size:14px}
+  .header-right{display:none}
+  .sidebar{max-height:60vh}
+  .card-icon{width:28px;height:28px;font-size:11px}
+  .card-title{font-size:12.5px}
 }
 </style>
 </head>
@@ -158,6 +223,7 @@ body{font-family:'Georgia','Times New Roman',serif;background:#faf8f4}
 
 <div id="map"></div>
 <div class="sidebar" id="sidebar"></div>
+<button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()">📋 View All Stops</button>
 
 <div class="opt-banner">
   <h3>Route Optimized</h3>
@@ -500,6 +566,52 @@ stops.forEach((s,i) => {
 // Fit bounds
 const allPts = stops.map(s=>[s.lat,s.lng]);
 map.fitBounds(L.latLngBounds(allPts).pad(0.12));
+
+// Mobile sidebar toggle
+let sidebarOpen = false;
+function toggleSidebar(){
+  const sb = document.getElementById('sidebar');
+  const btn = document.getElementById('mobileToggle');
+  sidebarOpen = !sidebarOpen;
+  if(sidebarOpen){
+    sb.classList.add('open');
+    btn.textContent = '✕ Close List';
+    btn.classList.add('list-open');
+  } else {
+    sb.classList.remove('open');
+    btn.textContent = '📋 View All Stops';
+    btn.classList.remove('list-open');
+  }
+}
+
+// Close sidebar on card click (mobile) — fly to location then close
+const origCardClicks = [];
+stops.forEach((s,i) => {
+  const card = document.getElementById(`card-${i}`);
+  card.addEventListener('click', () => {
+    if(window.innerWidth <= 768 && sidebarOpen){
+      setTimeout(()=>toggleSidebar(), 400);
+    }
+  });
+});
+
+// Touch swipe to dismiss sidebar
+let touchStartY = 0;
+const sb = document.getElementById('sidebar');
+sb.addEventListener('touchstart', e => {
+  touchStartY = e.touches[0].clientY;
+},{passive:true});
+sb.addEventListener('touchmove', e => {
+  const diff = e.touches[0].clientY - touchStartY;
+  if(diff > 80 && sidebarOpen){
+    toggleSidebar();
+  }
+},{passive:true});
+
+// Invalidate map size on orientation change
+window.addEventListener('resize', () => {
+  setTimeout(() => map.invalidateSize(), 200);
+});
 </script>
 </body>
 </html>

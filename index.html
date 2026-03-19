@@ -3,402 +3,503 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yunnan–Vietnam Route Map</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Yunnan Tea & Trek Route — Optimized Ground Transport</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Georgia','Times New Roman',serif;background:#faf8f4}
+#map{width:100%;height:100vh}
 
-  body {
-    background: #1a1a2e;
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px 15px;
-    color: #e0e0e0;
-  }
+.header{
+  position:absolute;top:0;left:0;right:0;z-index:1000;
+  background:linear-gradient(135deg,#3c1518 0%,#69306d 50%,#2c6e49 100%);
+  color:white;padding:14px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 4px 20px rgba(0,0,0,0.3);
+}
+.header-left h1{font-size:20px;font-weight:700;letter-spacing:1px;font-family:'Segoe UI',system-ui,sans-serif}
+.header-left .sub{font-size:12px;opacity:0.75;margin-top:3px;font-style:italic}
+.header-right{display:flex;gap:20px}
+.header-right .pill{
+  padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;
+  font-family:'Segoe UI',sans-serif;letter-spacing:0.5px;
+}
 
-  h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: clamp(1.5rem, 5vw, 2.2rem);
-    color: #f0e6d3;
-    text-align: center;
-    margin-bottom: 4px;
-    letter-spacing: 1px;
-  }
+.sidebar{
+  position:absolute;top:72px;left:10px;z-index:1000;
+  background:rgba(255,255,255,0.97);border-radius:14px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.18);
+  width:350px;max-height:calc(100vh - 86px);overflow-y:auto;
+}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px}
 
-  .subtitle {
-    text-align: center;
-    color: #8a8a9a;
-    font-size: clamp(0.8rem, 2.5vw, 0.95rem);
-    margin-bottom: 20px;
-    letter-spacing: 0.5px;
-  }
+.section-head{
+  padding:10px 16px;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1.5px;
+  font-family:'Segoe UI',sans-serif;
+  position:sticky;top:0;z-index:2;
+  border-bottom:1px solid rgba(0,0,0,0.06);
+}
 
-  .map-container {
-    position: relative;
-    width: 100%;
-    max-width: 900px;
-    aspect-ratio: 900 / 1060;
-    background: linear-gradient(170deg, #16213e 0%, #1a1a2e 40%, #0f3460 100%);
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.06);
-  }
+.card{
+  padding:14px 16px;border-bottom:1px solid #f0ebe3;
+  cursor:pointer;transition:all 0.25s;
+}
+.card:hover{background:#faf6f0}
+.card.active{background:#f4f0e6;border-left:4px solid #2c6e49}
+.card-top{display:flex;gap:12px;align-items:flex-start}
+.card-icon{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;color:white;
+  box-shadow:0 2px 8px rgba(0,0,0,0.15);
+  font-family:'Segoe UI',sans-serif;
+}
+.card-title{font-size:14.5px;font-weight:700;color:#2a2a2a;font-family:'Segoe UI',sans-serif}
+.card-sub{font-size:11px;color:#999;margin-top:2px;font-family:'Segoe UI',sans-serif}
+.card-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.tag{
+  font-size:9.5px;padding:2px 8px;border-radius:8px;
+  font-weight:600;font-family:'Segoe UI',sans-serif;
+}
+.card-body{
+  font-size:12.5px;color:#555;line-height:1.65;margin-top:10px;display:none;
+}
+.card.active .card-body{display:block}
+.card-transport{
+  font-size:11.5px;color:#6a5acd;margin-top:8px;display:none;
+  padding:8px 10px;background:#f8f6ff;border-radius:8px;
+  font-family:'Segoe UI',sans-serif;
+}
+.card.active .card-transport{display:block}
+.card-highlights{margin-top:8px;display:none}
+.card.active .card-highlights{display:flex;flex-wrap:wrap;gap:4px}
+.hl{
+  font-size:10px;padding:3px 9px;border-radius:10px;
+  background:#e8f5e9;color:#2e7d32;font-weight:600;
+  font-family:'Segoe UI',sans-serif;
+}
 
-  .map-container::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 600px 400px at 30% 20%, rgba(46,125,50,0.07) 0%, transparent 70%),
-      radial-gradient(ellipse 500px 300px at 70% 70%, rgba(211,47,47,0.05) 0%, transparent 70%);
-    pointer-events: none;
-  }
+.route-connector{
+  height:22px;display:flex;align-items:center;padding-left:28px;
+}
+.route-connector .dot{width:2px;height:100%;border-left:2px dashed #ddd;margin-left:14px}
 
-  .terrain {
-    position: absolute;
-    inset: 0;
-    opacity: 0.03;
-    background-image:
-      repeating-conic-gradient(rgba(255,255,255,0.03) 0% 25%, transparent 0% 50%) 0 0 / 20px 20px;
-    pointer-events: none;
-  }
+.opt-banner{
+  position:absolute;top:72px;right:12px;z-index:1000;
+  background:rgba(255,255,255,0.96);border-radius:14px;
+  padding:14px 18px;box-shadow:0 4px 20px rgba(0,0,0,0.12);
+  font-family:'Segoe UI',sans-serif;max-width:260px;
+}
+.opt-banner h3{font-size:13px;font-weight:700;color:#2c6e49;margin-bottom:8px}
+.opt-row{display:flex;align-items:flex-start;gap:8px;margin:8px 0;font-size:12px;color:#555;line-height:1.5}
+.opt-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.opt-divider{height:1px;background:#eee;margin:10px 0}
+.opt-compare{font-size:10.5px;color:#999;line-height:1.5}
+.opt-old{text-decoration:line-through;color:#c0392b}
+.opt-new{color:#27ae60;font-weight:600}
 
-  svg {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-  }
+.info-panel{
+  position:absolute;bottom:16px;right:12px;z-index:1000;
+  background:rgba(255,255,255,0.96);border-radius:14px;
+  padding:14px 18px;box-shadow:0 4px 20px rgba(0,0,0,0.12);
+  font-family:'Segoe UI',sans-serif;max-width:240px;
+}
+.info-panel h3{font-size:13px;font-weight:700;color:#333;margin-bottom:8px}
+.info-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px;color:#555}
+.info-dot{width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+.info-divider{height:1px;background:#eee;margin:8px 0}
+.info-note{font-size:10.5px;color:#999;font-style:italic;line-height:1.5}
 
-  .loc-dot {
-    cursor: pointer;
-    transition: transform 0.2s ease;
-  }
-  .loc-dot:hover { transform: scale(1.3); }
+.custom-marker{background:none;border:none}
+.m-pin{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;color:white;
+  font-family:'Segoe UI',sans-serif;
+  box-shadow:0 3px 12px rgba(0,0,0,0.3);
+  border:3px solid white;transition:transform 0.2s;
+}
+.m-pin:hover{transform:scale(1.15)}
 
-  .loc-label {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 13px;
-    fill: #f0e6d3;
-    pointer-events: none;
-  }
-  .loc-label-sub {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 400;
-    font-size: 10px;
-    fill: #8a8a9a;
-    pointer-events: none;
-  }
-  .loc-label-new {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 700;
-    font-size: 9px;
-    fill: #81c784;
-  }
+.leaflet-popup-content-wrapper{border-radius:12px!important;box-shadow:0 8px 28px rgba(0,0,0,0.15)!important}
+.leaflet-popup-content{margin:0!important}
+.pop{padding:16px 18px;min-width:250px;font-family:'Segoe UI',sans-serif}
+.pop h3{font-size:16px;color:#222;margin-bottom:2px}
+.pop .pop-sub{font-size:11px;color:#999;margin-bottom:10px}
+.pop .pop-act{font-size:12.5px;font-weight:600;margin-bottom:6px}
+.pop .pop-desc{font-size:12px;color:#555;line-height:1.6}
+.pop .pop-tr{font-size:11px;color:#6a5acd;margin-top:8px;padding-top:8px;border-top:1px solid #eee}
 
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    margin-top: 20px;
-    max-width: 100%;
-    padding: 0 10px;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: clamp(0.7rem, 2vw, 0.82rem);
-    color: #b0b0c0;
-  }
-  .legend-line {
-    width: 24px;
-    height: 3px;
-    border-radius: 2px;
-  }
-  .legend-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-  }
-
-  .border-line {
-    stroke-dasharray: 8 5;
-    stroke: rgba(255,255,255,0.15);
-    stroke-width: 1.5;
-  }
-
-  .country-label {
-    font-family: 'DM Serif Display', serif;
-    font-size: 28px;
-    fill: rgba(255,255,255,0.04);
-    letter-spacing: 12px;
-  }
-
-  .route-arrow {
-    fill: none;
-    stroke-width: 3;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .route-arrow-bg {
-    fill: none;
-    stroke-width: 7;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    opacity: 0.15;
-  }
-
-  .phase-badge {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 700;
-    font-size: 10px;
-    letter-spacing: 0.5px;
-  }
-
-  .day-tag {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 9.5px;
-    fill: rgba(255,255,255,0.5);
-  }
-
-  .compass { opacity: 0.3; }
-
-  .notes {
-    max-width: 100%;
-    margin-top: 20px;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 0 10px;
-  }
-
-  @media (min-width: 768px) {
-    .notes {
-      grid-template-columns: 1fr 1fr 1fr;
-      max-width: 900px;
-    }
-  }
-
-  .note-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 12px;
-    padding: 12px 14px;
-    font-size: clamp(0.75rem, 2vw, 0.8rem);
-    color: #9a9ab0;
-    line-height: 1.5;
-  }
-  .note-card strong {
-    color: #d0c8b8;
-    display: block;
-    margin-bottom: 4px;
-    font-size: clamp(0.8rem, 2vw, 0.85rem);
-  }
-
-  @media (max-width: 640px) {
-    .loc-label {
-      font-size: 11px;
-    }
-    .loc-label-sub {
-      font-size: 8px;
-    }
-    .phase-badge {
-      font-size: 8px;
-    }
-    .day-tag {
-      font-size: 8px;
-    }
-  }
+@media(max-width:768px){
+  .sidebar{width:100%;left:0;top:auto;bottom:0;max-height:44vh;border-radius:16px 16px 0 0}
+  .header h1{font-size:16px}
+  .header-right{display:none}
+  .opt-banner{display:none}
+}
 </style>
 </head>
 <body>
-<h1>Yunnan → Vietnam Route Map</h1>
-<p class="subtitle">Mar 26 – Apr 20 · 6 Phases · Overland No-Backtrack Route</p>
- <a href="https://docs.google.com/spreadsheets/d/1bTxFZa6ikA3Wwpx9Eeh_7Eg_lIDsgwC_/edit?usp=sharing&ouid=108820013629051073999&rtpof=true&sd=true" target="_blank" class="sheet-link">📋 Open Full Itinerary in Google Sheets →</a>
-<div class="map-container">
-  <div class="terrain"></div>
-  <svg viewBox="0 0 900 1060" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-    <defs>
-      <marker id="arr1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ef5350"/></marker>
-      <marker id="arr2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ab47bc"/></marker>
-      <marker id="arr3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#42a5f5"/></marker>
-      <marker id="arr4" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#66bb6a"/></marker>
-      <marker id="arr5" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffa726"/></marker>
-      <marker id="arr6" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffee58"/></marker>
-      <marker id="arr4r" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffab40"/></marker>
 
-      <filter id="glow"><feGaussianBlur stdDeviation="3" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      <filter id="glow-sm"><feGaussianBlur stdDeviation="2" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    </defs>
-    <text x="300" y="200" class="country-label" transform="rotate(-15 300 200)">YUNNAN · CHINA</text>
-    <text x="560" y="940" class="country-label" transform="rotate(-8 560 940)">VIETNAM</text>
-    <line x1="100" y1="820" x2="780" y2="780" class="border-line"/>
-    <text x="720" y="810" font-family="DM Sans" font-size="11" fill="rgba(255,255,255,0.2)" font-weight="600">BORDER</text>
-    <path d="M 50 400 Q 200 380, 350 420 Q 500 460, 650 400 Q 780 360, 900 390" stroke="rgba(255,255,255,0.03)" stroke-width="1" fill="none"/>
-    <circle cx="500" cy="310" r="22" fill="none" stroke="#ef5350" stroke-width="2" stroke-dasharray="4 3" opacity="0.4"/>
-    <path d="M 520 315 Q 590 310, 635 305" class="route-arrow-bg" stroke="#ef5350"/>
-    <path d="M 520 315 Q 590 310, 635 305" class="route-arrow" stroke="#ef5350" marker-end="url(#arr1)"/>
-    <path d="M 635 315 Q 590 325, 530 325" class="route-arrow" stroke="#ef5350" stroke-dasharray="4 3" opacity="0.5"/>
-    <path d="M 510 330 Q 540 390, 570 440 Q 590 470, 610 490" class="route-arrow-bg" stroke="#ab47bc"/>
-    <path d="M 510 330 Q 540 390, 570 440 Q 590 470, 610 490" class="route-arrow" stroke="#ab47bc" marker-end="url(#arr2)"/>
-    <path d="M 620 510 Q 610 550, 580 590 Q 560 620, 540 640" class="route-arrow-bg" stroke="#ab47bc"/>
-    <path d="M 620 510 Q 610 550, 580 590 Q 560 620, 540 640" class="route-arrow" stroke="#ab47bc" marker-end="url(#arr2)"/>
-    <path d="M 530 640 Q 510 590, 495 530 Q 480 460, 490 400 Q 493 360, 495 330" class="route-arrow-bg" stroke="#ab47bc"/>
-    <path d="M 530 640 Q 510 590, 495 530 Q 480 460, 490 400 Q 493 360, 495 330" class="route-arrow" stroke="#ab47bc" stroke-dasharray="6 4" marker-end="url(#arr2)"/>
-    <text x="455" y="480" class="day-tag" fill="#ce93d8" font-size="9" transform="rotate(-80 455 480)">↑ DIFF ROAD BACK</text>
-    <path d="M 480 300 Q 420 280, 340 250 Q 280 230, 230 210" class="route-arrow-bg" stroke="#42a5f5"/>
-    <path d="M 480 300 Q 420 280, 340 250 Q 280 230, 230 210" class="route-arrow" stroke="#42a5f5" marker-end="url(#arr3)"/>
-    <path d="M 215 195 Q 200 170, 195 145" class="route-arrow-bg" stroke="#42a5f5"/>
-    <path d="M 215 195 Q 200 170, 195 145" class="route-arrow" stroke="#42a5f5" marker-end="url(#arr3)"/>
-    <path d="M 200 130 Q 240 115, 290 100 Q 330 90, 360 82" class="route-arrow-bg" stroke="#42a5f5"/>
-    <path d="M 200 130 Q 240 115, 290 100 Q 330 90, 360 82" class="route-arrow" stroke="#42a5f5" marker-end="url(#arr3)"/>
-    <path d="M 375 65 Q 350 50, 310 38 Q 270 28, 235 25" class="route-arrow-bg" stroke="#42a5f5"/>
-    <path d="M 375 65 Q 350 50, 310 38 Q 270 28, 235 25" class="route-arrow" stroke="#42a5f5" marker-end="url(#arr3)"/>
-    <text x="360" y="150" class="day-tag" fill="#90caf9" font-size="9">NO BACKTRACK ✓</text>
-    <path d="M 225 38 Q 235 80, 230 130 Q 228 165, 225 200" class="route-arrow-bg" stroke="#ffab40"/>
-    <path d="M 225 38 Q 235 80, 230 130 Q 228 165, 225 200" class="route-arrow" stroke="#ffab40" stroke-dasharray="6 4" marker-end="url(#arr4r)" opacity="0.7"/>
-    <text x="243" y="115" class="day-tag" fill="#ffab40" font-size="8.5">⚠️ ONLY REPEAT</text>
-    <path d="M 210 218 Q 195 260, 175 300 Q 160 340, 155 365" class="route-arrow-bg" stroke="#66bb6a"/>
-    <path d="M 210 218 Q 195 260, 175 300 Q 160 340, 155 365" class="route-arrow" stroke="#66bb6a" marker-end="url(#arr4)"/>
-    <path d="M 155 385 Q 150 440, 155 500 Q 162 560, 175 600" class="route-arrow-bg" stroke="#66bb6a"/>
-    <path d="M 155 385 Q 150 440, 155 500 Q 162 560, 175 600" class="route-arrow" stroke="#66bb6a" marker-end="url(#arr4)"/>
-    <path d="M 182 620 Q 200 660, 215 700 Q 225 720, 230 738" class="route-arrow-bg" stroke="#66bb6a"/>
-    <path d="M 182 620 Q 200 660, 215 700 Q 225 720, 230 738" class="route-arrow" stroke="#66bb6a" marker-end="url(#arr4)"/>
-    <text x="105" y="500" class="day-tag" fill="#a5d6a7" font-size="9" transform="rotate(-85 105 500)">ALL NEW WESTERN ROAD ✓</text>
-    <path d="M 250 745 Q 310 680, 370 610 Q 420 540, 445 460 Q 460 410, 475 370" class="route-arrow-bg" stroke="#ffa726"/>
-    <path d="M 250 745 Q 310 680, 370 610 Q 420 540, 445 460 Q 460 410, 475 370" class="route-arrow" stroke="#ffa726" marker-end="url(#arr5)"/>
-    <path d="M 485 380 Q 530 460, 570 550 Q 610 640, 640 720 Q 655 755, 665 775" class="route-arrow-bg" stroke="#ffa726"/>
-    <path d="M 485 380 Q 530 460, 570 550 Q 610 640, 640 720 Q 655 755, 665 775" class="route-arrow" stroke="#ffa726" marker-end="url(#arr5)"/>
-    <text x="400" y="435" class="day-tag" fill="#ffcc80" font-size="9">YUXI JUNCTION ✓</text>
-    <text x="395" y="448" class="day-tag" fill="#ffcc80" font-size="8">No Kunming backtrack</text>
-    <path d="M 672 795 Q 680 830, 685 860 Q 688 880, 690 895" class="route-arrow-bg" stroke="#ffee58"/>
-    <path d="M 672 795 Q 680 830, 685 860 Q 688 880, 690 895" class="route-arrow" stroke="#ffee58" marker-end="url(#arr6)"/>
-    <path d="M 695 915 Q 700 940, 710 960 Q 720 975, 735 985" class="route-arrow-bg" stroke="#ffee58"/>
-    <path d="M 695 915 Q 700 940, 710 960 Q 720 975, 735 985" class="route-arrow" stroke="#ffee58" marker-end="url(#arr6)"/>
-    <circle cx="218" cy="25" r="8" fill="#42a5f5" opacity="0.2"/>
-    <circle cx="218" cy="25" r="5" fill="#42a5f5" filter="url(#glow-sm)" class="loc-dot"/>
-    <text x="155" y="55" class="loc-label">🏔️ Shangri-La</text>
-    <text x="167" y="67" class="loc-label-sub">3,300m · Tibetan · Apr 6</text>
-    <circle cx="380" cy="75" r="7" fill="#42a5f5" opacity="0.2"/>
-    <circle cx="380" cy="75" r="4.5" fill="#42a5f5" filter="url(#glow-sm)" class="loc-dot"/>
-    <text x="400" y="72" class="loc-label">Lijiang</text>
-    <text x="400" y="84" class="loc-label-sub">UNESCO · Apr 3–5</text>
-    <circle cx="190" cy="135" r="6" fill="#42a5f5" opacity="0.2"/>
-    <circle cx="190" cy="135" r="4" fill="#42a5f5" filter="url(#glow-sm)" class="loc-dot"/>
-    <text x="108" y="132" class="loc-label">Shaxi</text>
-    <text x="100" y="144" class="loc-label-sub">Tea Horse Rd · Apr 3</text>
-    <circle cx="220" cy="205" r="8" fill="#42a5f5" opacity="0.2"/>
-    <circle cx="220" cy="205" r="5" fill="#42a5f5" filter="url(#glow-sm)" class="loc-dot"/>
-    <text x="100" y="205" class="loc-label">🏯 Dali</text>
-    <text x="100" y="217" class="loc-label-sub">Three Pagodas · Apr 1–2</text>
-    <circle cx="500" cy="310" r="12" fill="#ef5350" opacity="0.15"/>
-    <circle cx="500" cy="310" r="7" fill="#ef5350" filter="url(#glow)" class="loc-dot"/>
-    <text x="530" y="300" class="loc-label" font-size="15" fill="#ffcdd2">★ KUNMING</text>
-    <text x="530" y="314" class="loc-label-sub">Hub · Mar 26–28 & 31</text>
-    <circle cx="650" cy="305" r="5" fill="#ef5350" opacity="0.2"/>
-    <circle cx="650" cy="305" r="3.5" fill="#ef5350" class="loc-dot"/>
-    <text x="665" y="300" class="loc-label" font-size="11">Stone Forest</text>
-    <text x="665" y="312" class="loc-label-sub">UNESCO · Mar 28</text>
-    <circle cx="478" cy="370" r="6" fill="#ffa726" opacity="0.2"/>
-    <circle cx="478" cy="370" r="4" fill="#ffa726" class="loc-dot"/>
-    <text x="418" y="385" class="loc-label" font-size="11">⚡ Yuxi</text>
-    <text x="418" y="397" class="loc-label-sub">Rail junction</text>
-    <circle cx="152" cy="375" r="6" fill="#66bb6a" opacity="0.2"/>
-    <circle cx="152" cy="375" r="4" fill="#66bb6a" filter="url(#glow-sm)" class="loc-dot"/>
-    <text x="58" y="372" class="loc-label">Weishan</text>
-    <text x="55" y="384" class="loc-label-sub">Nanzhao · Apr 7</text>
-    <text x="105" y="373" class="loc-label-new">🆕</text>
-    <circle cx="620" cy="498" r="7" fill="#ab47bc" opacity="0.2"/>
-    <circle cx="620" cy="498" r="4.5" fill="#ab47bc" filter="url(#glow-sm)" class="loc-dot"/>
-    <text x="640" y="493" class="loc-label">Jianshui</text>
-    <text x="640" y="505" class="loc-label-sub">1,200 yrs · Mar 29</text>
-    <text x="695" y="493" class="loc-label-new">🆕</text>
-    <circle cx="175" cy="608" r="6" fill="#66bb6a" opacity="0.2"/>
-    <circle cx="175" cy="608" r="4" fill="#66bb6a" filter="url(#glow-sm)" class="loc-dot"/>
-    <text x="62" y="605" class="loc-label">🍵 Pu'er</text>
-    <text x="68" y="617" class="loc-label-sub">Tea capital · Apr 8</text>
-    <text x="125" y="605" class="loc-label-new">🆕</text>
-    <circle cx="535" cy="648" r="7" fill="#ab47bc" opacity="0.2"/>
-    <circle cx="535" cy="648" r="4.5" fill="#ab47bc" filter="url(#glow-sm)" class="loc-dot"/>
-    <text x="555" y="643" class="loc-label">Yuanyang</text>
-    <text x="555" y="655" class="loc-label-sub">Rice terraces · Mar 30–31</text>
-    <circle cx="237" cy="750" r="8" fill="#66bb6a" opacity="0.2"/>
-    <circle cx="237" cy="750" r="5" fill="#66bb6a" filter="url(#glow-sm)" class="loc-dot"/>
-    <text x="105" y="745" class="loc-label">🌴 Xishuangbanna</text>
-    <text x="105" y="758" class="loc-label-sub">Tropical · Theravada ☸️ · Apr 8–9</text>
-    <circle cx="668" cy="783" r="7" fill="#ffa726" opacity="0.2"/>
-    <circle cx="668" cy="783" r="4.5" fill="#ffa726" filter="url(#glow-sm)" class="loc-dot"/>
-    <text x="690" y="777" class="loc-label">Hekou</text>
-    <text x="690" y="789" class="loc-label-sub">Border · Apr 9 night</text>
-    <circle cx="688" cy="900" r="7" fill="#ffee58" opacity="0.2"/>
-    <circle cx="688" cy="900" r="4.5" fill="#ffee58" filter="url(#glow-sm)" class="loc-dot"/>
-    <text x="710" y="895" class="loc-label" fill="#fff9c4">🏔️ Sapa</text>
-    <text x="710" y="907" class="loc-label-sub" fill="#fff9c4">Rice terraces · Apr 10–12</text>
-    <text x="648" y="890" class="loc-label-sub" fill="#aaa">Lào Cai↗</text>
-    <circle cx="745" cy="990" r="9" fill="#ffee58" opacity="0.15"/>
-    <circle cx="745" cy="990" r="6" fill="#ffee58" filter="url(#glow-sm)" class="loc-dot"/>
-    <text x="770" y="985" class="loc-label" fill="#fff9c4" font-size="14">🇻🇳 Hanoi</text>
-    <text x="770" y="998" class="loc-label-sub" fill="#fff9c4">Capital · Apr 14–16+</text>
-    <text x="770" y="1010" class="loc-label-sub" fill="#777">→ Hạ Long Bay · Ninh Bình</text>
-    <rect x="550" y="255" width="90" height="20" rx="10" fill="#ef5350" opacity="0.9"/>
-    <text x="595" y="269" text-anchor="middle" class="phase-badge" fill="white">PHASE 1</text>
-    <rect x="650" y="448" width="90" height="20" rx="10" fill="#ab47bc" opacity="0.9"/>
-    <text x="695" y="462" text-anchor="middle" class="phase-badge" fill="white">PHASE 2</text>
-    <rect x="420" y="150" width="90" height="20" rx="10" fill="#42a5f5" opacity="0.9"/>
-    <text x="465" y="164" text-anchor="middle" class="phase-badge" fill="white">PHASE 3</text>
-    <rect x="55" y="465" width="90" height="20" rx="10" fill="#66bb6a" opacity="0.9"/>
-    <text x="100" y="479" text-anchor="middle" class="phase-badge" fill="white">PHASE 4</text>
-    <rect x="520" y="570" width="90" height="20" rx="10" fill="#ffa726" opacity="0.9"/>
-    <text x="565" y="584" text-anchor="middle" class="phase-badge" fill="white">PHASE 5</text>
-    <rect x="700" y="840" width="90" height="20" rx="10" fill="#e6d520" opacity="0.9"/>
-    <text x="745" y="854" text-anchor="middle" class="phase-badge" fill="white">PHASE 6</text>
-    <g class="compass" transform="translate(820, 60)">
-      <circle cx="0" cy="0" r="22" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-      <text x="0" y="-28" text-anchor="middle" font-family="DM Sans" font-size="12" fill="rgba(255,255,255,0.4)" font-weight="700">N</text>
-      <line x1="0" y1="-18" x2="0" y2="-8" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
-      <line x1="0" y1="8" x2="0" y2="18" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
-      <line x1="-18" y1="0" x2="-8" y2="0" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
-      <line x1="8" y1="0" x2="18" y2="0" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
-    </g>
-    <text x="668" y="830" text-anchor="middle" font-size="16">🌉</text>
-    <text x="668" y="845" text-anchor="middle" font-family="DM Sans" font-size="8" fill="#ffa726">Friendship Bridge</text>
-    <text x="218" cy="25" font-size="14" x="138" y="33">☸️</text>
-    <text x="175" cy="608" font-size="11" x="193" y="608">☸️</text>
-  </svg>
-</div>
-
-<div class="legend">
-  <div class="legend-item"><div class="legend-line" style="background:#ef5350"></div>Phase 1: Kunming (Mar 27–28)</div>
-  <div class="legend-item"><div class="legend-line" style="background:#ab47bc"></div>Phase 2: SE Loop (Mar 29–31)</div>
-  <div class="legend-item"><div class="legend-line" style="background:#42a5f5"></div>Phase 3: Northwest (Apr 1–6)</div>
-  <div class="legend-item"><div class="legend-line" style="background:#66bb6a"></div>Phase 4: South New Route (Apr 7–8)</div>
-  <div class="legend-item"><div class="legend-line" style="background:#ffa726"></div>Phase 5: To Border (Apr 9)</div>
-  <div class="legend-item"><div class="legend-line" style="background:#ffee58"></div>Phase 6: Vietnam (Apr 10+)</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#81c784"></div>🆕 New Destination</div>
- </div>
-
-<div class="notes">
-  <div class="note-card">
-    <strong>🔄 Loop Strategy</strong>
-    SE Loop returns via Gejiu (different road). NW line goes Dali→Shaxi→Lijiang→Shangri-La without backtracking. South route uses entirely new western corridor.
+<div class="header">
+  <div class="header-left">
+    <h1>Yunnan Tea & Trek Route</h1>
+    <div class="sub">14+ Days Overland &middot; No Flights &middot; Optimized for Ground Transport</div>
   </div>
-  <div class="note-card">
-    <strong>⚡ Yuxi Junction Trick</strong>
-    China-Laos Railway & Kunming-Hekou Railway both pass through Yuxi — no need to backtrack to Kunming!
-  </div>
-  <div class="note-card">
-    <strong>☸️ Buddhist Highlights</strong>
-    Yuantong Temple · Shibao Grottoes · Sumtseling Monastery · Dai Temples · Trấn Quốc Pagoda · Bái Đính
+  <div class="header-right">
+    <div class="pill" style="background:rgba(255,255,255,0.15);color:#a8e6cf">🍵 Tea</div>
+    <div class="pill" style="background:rgba(255,255,255,0.15);color:#ffd3b6">🥾 Trek</div>
+    <div class="pill" style="background:rgba(255,255,255,0.15);color:#dcedc1">☸️ Buddhist</div>
+    <div class="pill" style="background:rgba(255,255,255,0.15);color:#ffaaa5">🚆 Rail</div>
   </div>
 </div>
 
+<div id="map"></div>
+<div class="sidebar" id="sidebar"></div>
+
+<div class="opt-banner">
+  <h3>Route Optimized</h3>
+  <div class="opt-row"><div class="opt-icon">🔄</div><div><strong>Northwest loop first</strong>, then straight south to tea country and Vietnam border</div></div>
+  <div class="opt-row"><div class="opt-icon">🚫</div><div>Eliminates 2 of 3 Kunming backtracks from original route</div></div>
+  <div class="opt-row"><div class="opt-icon">🚆</div><div><strong>Yuxi junction</strong> exit — Xishuangbanna to border without returning to Kunming</div></div>
+  <div class="opt-divider"></div>
+  <div class="opt-compare">
+    <span class="opt-old">Old: KM→South→KM→NW→KM→Border</span><br>
+    <span class="opt-new">New: KM→NW loop→South all the way→Border</span>
+  </div>
+</div>
+
+<div class="info-panel">
+  <h3>Route Legend</h3>
+  <div class="info-row"><div class="info-dot" style="background:#c0392b"></div> City / Gateway</div>
+  <div class="info-row"><div class="info-dot" style="background:#2980b9"></div> NW Loop: Lakes & Gorges</div>
+  <div class="info-row"><div class="info-dot" style="background:#8e44ad"></div> Tibetan Highland</div>
+  <div class="info-row"><div class="info-dot" style="background:#27ae60"></div> Tea Country South</div>
+  <div class="info-row"><div class="info-dot" style="background:#e74c3c"></div> Border & Vietnam</div>
+  <div class="info-divider"></div>
+  <div class="info-note">Route flows in one direction: NW loop, then straight south to Vietnam. Only 1 unavoidable backtrack (Shangri-La → Kunming).</div>
+</div>
+
+<script>
+const sections = [
+  {id:"start",label:"START — KUNMING",color:"#c0392b"},
+  {id:"nw",label:"NORTHWEST LOOP — LAKES, PEAKS & GORGES",color:"#1a5276"},
+  {id:"tea",label:"SOUTH — TEA COUNTRY & TROPICS",color:"#2c6e49"},
+  {id:"border",label:"BORDER CROSSING & VIETNAM",color:"#922b21"},
+];
+
+// REORDERED: NW loop first, then south to tea country, then border exit
+const stops = [
+  // 1-2: Kunming
+  {sec:"start",icon_bg:"#c0392b",day:"Days 1–2",date:"Start",
+   name:"Kunming",lat:25.0389,lng:102.7183,color:"#c0392b",
+   activities:"Green Lake Park · Western Hills · Dragon Gate · Yunnan Museum",
+   desc:"Morning tai chi at Green Lake Park. Hike Western Hills to Dragon Gate (~2h, panoramic Dianchi Lake views). Yunnan Provincial Museum for context on 25 ethnic minorities. Evening: first Dian Hong tea at a proper teahouse. Book onward train via 12306 app.",
+   transport:"🚆 HSR to Dali next morning (~2 hrs, ¥145, 30+ daily). No need to go south first!",
+   highlights:["Tai Chi","Dragon Gate","Dian Hong Tea","25 Minorities"]},
+
+  // 3: Dali - Erhai
+  {sec:"nw",icon_bg:"#2980b9",day:"Day 3",date:"↖ Northwest",
+   name:"Dali — Erhai Lake",lat:25.6065,lng:100.2676,color:"#2980b9",
+   activities:"HSR from Kunming · Erhai Lake Bike Circuit · Three Pagodas · Bai Villages",
+   desc:"HSR from Kunming takes just 2–2.5 hrs — start the NW loop immediately. Rent a bike and cycle the Erhai Lake circuit — flat, beautiful, stops at Bai fishing villages. Visit the iconic Three Pagodas of Chongsheng Temple. Wander Dali Ancient Town evening.",
+   transport:"🚆 HSR Kunming → Dali (~2 hrs, ¥145). Bike rental in Old Town.",
+   highlights:["Erhai Cycling","Three Pagodas","Bai Villages","Ancient Town"]},
+
+  // 4: Dali - Cangshan
+  {sec:"nw",icon_bg:"#2980b9",day:"Day 4",date:"Local",
+   name:"Dali — Cangshan Mountain",lat:25.6700,lng:100.1100,color:"#2980b9",
+   activities:"Jade Belt Cloud Road · Cable Car · Panoramic Views over Erhai",
+   desc:"Hike the Jade Belt Cloud Road — traverses the entire mountain range at altitude. Cable car available if needed, stunning views over Erhai Lake below. Pack evening for northward journey tomorrow.",
+   transport:"🚐 Cable car ¥150. Tomorrow: car to Shaxi then Lijiang (~4 hrs total)",
+   highlights:["Jade Belt Road","Cable Car","Erhai Panorama"]},
+
+  // 5: Lijiang via Shaxi
+  {sec:"nw",icon_bg:"#2980b9",day:"Day 5",date:"↑ North",
+   name:"Shaxi → Lijiang",lat:26.8721,lng:100.2299,color:"#2980b9",
+   activities:"Shaxi Ancient Town en route · Lijiang Old Town · Black Dragon Pool · Baisha Frescoes",
+   desc:"Drive north: stop at Shaxi Ancient Town on the old Tea Horse Road (~2 hrs from Dali), then continue to Lijiang (~2 hrs). Explore Lijiang Ancient Town (UNESCO) at dusk. Black Dragon Pool with Jade Dragon Snow Mountain reflections. Browse ancient Baisha Naxi frescoes.",
+   transport:"🚐 Dali → Shaxi (~2 hrs) → Lijiang (~2 hrs). All northward, no backtrack!",
+   highlights:["Shaxi Tea Horse Road","Dawn Walk","Black Dragon Pool","Baisha Frescoes"]},
+
+  // 6: Tiger Leaping Gorge Day 1
+  {sec:"nw",icon_bg:"#e67e22",day:"Day 6",date:"↑ North",
+   name:"Tiger Leaping Gorge — High Trail Day 1",lat:27.1867,lng:100.1100,color:"#e67e22",
+   activities:"High Trail · 28 Bends · Halfway House Sunset",
+   desc:"Bus from Lijiang to Qiaotou (~2h), start hiking by 10:30am. The High Trail clings to the mountainside hundreds of meters above the Jinsha River. Tackle the famous 28 Bends in the afternoon — brutal but rewarding. Overnight at Halfway House — incredible sunset views.",
+   transport:"🚐 Lijiang → Qiaotou (~2 hrs). Download maps.me offline!",
+   highlights:["High Trail","28 Bends","Halfway House","Jinsha River"]},
+
+  // 7: Tiger Leaping Gorge Day 2
+  {sec:"nw",icon_bg:"#e67e22",day:"Day 7",date:"Continue ↑",
+   name:"Tiger Leaping Gorge — Day 2 → Shangri-La",lat:27.2100,lng:100.0800,color:"#e67e22",
+   activities:"Downhill to Tina's · River Edge · Onward to Shangri-La",
+   desc:"Shorter day, 3–4h downhill to Tina's Guesthouse. Option to descend to the river's edge. Afternoon bus onward to Shangri-La (3h) — the furthest north point of the trip.",
+   transport:"🚐 Tina's → Shangri-La bus (~3 hrs). Continuing north — no backtrack!",
+   highlights:["River Edge","Tina's GH","Onward North"]},
+
+  // 8: Shangri-La
+  {sec:"nw",icon_bg:"#8e44ad",day:"Day 8",date:"Furthest North",
+   name:"Shangri-La",lat:27.8297,lng:99.7069,color:"#8e44ad",
+   activities:"Songzanlin Monastery · Pudacuo National Park · Alpine Lakes · Prayer Wheel",
+   desc:"Tibetan plateau at 3,300m — the turnaround point. Morning: Songzanlin Monastery — largest Tibetan Buddhist monastery in Yunnan. Afternoon: Pudacuo National Park — alpine lakes, meadows, Tibetan villages. Evening: Dukezong Ancient City, golden prayer wheel at sunset.",
+   transport:"🚆 Tomorrow: train south to Kunming (~6-8 hrs) or fly. Only unavoidable backtrack. ⚠️ Altitude 3,300m!",
+   highlights:["Songzanlin","Pudacuo","Alpine Lakes","Prayer Wheel","3,300m"]},
+
+  // 9: Transit south to Pu'er
+  {sec:"tea",icon_bg:"#27ae60",day:"Day 9",date:"↓ South transit",
+   name:"Shangri-La → Kunming → Pu'er",lat:22.7870,lng:100.9720,color:"#27ae60",
+   activities:"Transit Day · Arrive Pu'er · World Tea Capital",
+   desc:"Long transit day heading south — the only backtrack. Train/bus Shangri-La → Kunming, then evening HSR Kunming → Pu'er. Overnight sleeper option saves time. Arrive at the world tea capital. Quick evening stroll of Pu'er tea market.",
+   transport:"🚆 Shangri-La → Kunming (~6-8 hrs), then HSR Kunming → Pu'er (~2.5 hrs). Overnight sleeper option available.",
+   highlights:["Transit Day","Tea Capital","Overnight Sleeper Option"]},
+
+  // 10: Xishuangbanna
+  {sec:"tea",icon_bg:"#27ae60",day:"Day 10",date:"↓ Further South",
+   name:"Xishuangbanna (Jinghong)",lat:22.0017,lng:100.7977,color:"#27ae60",
+   activities:"Bullet Train from Pu'er · Mekong Riverfront · Dai Night Market · Dai Buddhist Temple",
+   desc:"Quick bullet train from Pu'er to tropical Jinghong (~1 hr). Stroll the Mekong riverfront at dusk. Night market for Dai minority food. Visit golden Dai Buddhist temple — Theravada tradition, different from rest of China!",
+   transport:"🚆 Bullet train Pu'er → Jinghong (~1 hr, ¥60-80). Now deep in the south — no more backtracking!",
+   highlights:["1hr Bullet Train","Mekong River","Dai Food","Theravada Temple"]},
+
+  // 11: Ancient Tea Mountains
+  {sec:"tea",icon_bg:"#1d8348",day:"Day 11",date:"Local",
+   name:"Ancient Tea Mountains",lat:21.7500,lng:100.4000,color:"#1d8348",
+   activities:"Nannuo / Bulang Mountain · 500–800yr Trees · Wok-Fired Maocha · Buy Direct",
+   desc:"Full day on Nannuo or Bulang Mountain near Menghai. Visit trees 500–800+ years old, watch wok-fired maocha production, buy direct from farmers. This is the real Pu-erh heartland — don't rush it.",
+   transport:"🚐 Arrange through guesthouse or tea guide from Jinghong. ~1-2 hrs each way.",
+   highlights:["800yr Trees","Wok-Fired Maocha","Buy Direct","Pu-erh Heartland"]},
+
+  // 12: Jungle & Dai Villages
+  {sec:"tea",icon_bg:"#27ae60",day:"Day 12",date:"Local",
+   name:"Jungle & Dai Villages",lat:22.1700,lng:100.8600,color:"#27ae60",
+   activities:"Wild Elephant Valley · Jungle Trek · Cycling Dai Villages · Dai Ceremony",
+   desc:"Morning: Wild Elephant Valley — Asian elephants in natural habitat. Afternoon: jungle trekking and cycling through Dai villages. Evening: traditional Dai ceremony and dinner. Last full day in Xishuangbanna area.",
+   transport:"🚐 Local transport from Jinghong. All within the region.",
+   highlights:["Wild Elephants","Jungle Trek","Dai Ceremony"]},
+
+  // 13: Jingmai Mountain
+  {sec:"tea",icon_bg:"#1d8348",day:"Day 13",date:"Tea Forest",
+   name:"Jingmai Mountain",lat:22.1731,lng:99.9867,color:"#1d8348",
+   activities:"UNESCO Ancient Tea Forest · Wengji Bulang Village · Gongfu Ceremony · Ancient-Tree Pu-erh",
+   desc:"Bus to Jingmai Mountain (~2.5 hrs). Trek through the living ancient tea forest — misty, atmospheric, magical. Visit Wengji Bulang village — centuries-old settlement surrounded by ancient trees. Gongfu tea ceremony with a local master. Try ancient-tree single-origin raw Pu-erh.",
+   transport:"🚐 Bus from Jinghong (~2.5 hrs). Stay overnight in tea forest guesthouse.",
+   highlights:["UNESCO Forest","Wengji Village","Gongfu Ceremony","Ancient-Tree Pu-erh"]},
+
+  // 14: To Border via Yuxi junction
+  {sec:"border",icon_bg:"#8e44ad",day:"Day 14",date:"↗ then ↓ to Border",
+   name:"Xishuangbanna → Yuxi → Hekou",lat:22.5077,lng:103.9583,color:"#8e44ad",
+   activities:"Bullet Train to Yuxi Junction · Transfer to Border Line · Last Night in China",
+   desc:"Return to Jinghong, then bullet train north to Yuxi junction (~2.5-3 hrs) where China-Laos Railway meets the Kunming-Hekou line. Transfer south to Hekou (~3-4 hrs). No backtrack to Kunming — Yuxi is the junction! Last night in China.",
+   transport:"🚆 Train 1: Jinghong → Yuxi (2.5-3 hrs, ¥130-160). Train 2: Yuxi → Hekou North (3-4 hrs, ¥50-80). Total ~6-7 hrs.",
+   highlights:["Yuxi Junction","No Kunming Backtrack","2 Trains","Border Town"]},
+
+  // 15: Border crossing
+  {sec:"border",icon_bg:"#e74c3c",day:"Day 15",date:"Border Crossing",
+   name:"Hekou → Lào Cai",lat:22.4856,lng:103.9706,color:"#e74c3c",
+   activities:"Friendship Bridge · Walk into Vietnam",
+   desc:"Pass through Chinese exit building, walk across the Friendship Bridge into Vietnam. Vietnamese border checks usually quick. eVisa holders: must select 'Lào Cai' as port of entry, bring printed copy! Exchange remaining CNY.",
+   transport:"🚶 Walk across Friendship Bridge (~15 min). Then bus/Grab to Sapa (~45 min).",
+   highlights:["Friendship Bridge","eVisa: Lào Cai","Quick Crossing"]},
+
+  // 16: Sapa
+  {sec:"border",icon_bg:"#c0392b",day:"Bonus",date:"1–2 Days",
+   name:"Sapa",lat:22.3363,lng:103.8440,color:"#c0392b",
+   activities:"Rice Terraces · Hmong & Dao Villages · Fansipan Cable Car (3,143m)",
+   desc:"45 min from Lào Cai by bus. Spectacular rice terraces, trekking through Hmong and Dao minority villages. One of the best hikes in Southeast Asia. Cable car to Fansipan — 'Roof of Indochina' at 3,143m.",
+   transport:"🚐 Bus from Lào Cai (~45 min). Motorbike rental ~150-200k VND/day.",
+   highlights:["Rice Terraces","Hmong Trek","Fansipan 3,143m"]},
+
+  // 17: Hanoi
+  {sec:"border",icon_bg:"#c0392b",day:"Bonus",date:"2–3 Days",
+   name:"Hanoi",lat:21.0285,lng:105.8542,color:"#c0392b",
+   activities:"Old Quarter · Hoan Kiem Lake · Street Food · Buddhist Heritage",
+   desc:"Overnight train from Lào Cai (~8h, departs ~21:30). Old Quarter, Hoan Kiem Lake, street food paradise. Tran Quoc Pagoda (6th century), One Pillar Pagoda. Base for Ha Long Bay or Ninh Binh day trips.",
+   transport:"🚆 Overnight sleeper train from Lào Cai (~8 hrs, $12-40). Or VIP van from Sapa (~5.5 hrs, $20-25).",
+   highlights:["Old Quarter","Egg Coffee","Phở","Bún Chả"]},
+
+  // 18: Ha Giang
+  {sec:"border",icon_bg:"#922b21",day:"Bonus",date:"3–4 Days",
+   name:"Ha Giang Loop",lat:23.0000,lng:105.0000,color:"#922b21",
+   activities:"Most Dramatic Motorbike Route in Vietnam · Karst Mountains · Remote Villages",
+   desc:"The most dramatic motorbike route in all of Vietnam. Karst mountains, rice terraces, remote minority villages. Rent a semi-automatic motorbike or hire an Easy Rider guide. Bus from Hanoi (~5h).",
+   transport:"🚐 Bus from Hanoi (~5 hrs). Motorbike rental at Ha Giang.",
+   highlights:["Karst Mountains","Easy Rider","Remote Villages","Epic Road"]}
+];
+
+// Build sidebar
+const sidebar = document.getElementById('sidebar');
+let lastSec = '';
+stops.forEach((s,i) => {
+  if(s.sec !== lastSec){
+    lastSec = s.sec;
+    const sec = sections.find(x=>x.id===s.sec);
+    const h = document.createElement('div');
+    h.className = 'section-head';
+    h.style.background = sec.color+'0d';
+    h.style.color = sec.color;
+    h.textContent = sec.label;
+    sidebar.appendChild(h);
+  }
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.id = `card-${i}`;
+
+  let hlHtml = '';
+  if(s.highlights){
+    hlHtml = s.highlights.map(h=>`<span class="hl">${h}</span>`).join('');
+  }
+
+  card.innerHTML = `
+    <div class="card-top">
+      <div class="card-icon" style="background:${s.icon_bg}">
+        ${i+1}
+      </div>
+      <div>
+        <div class="card-title">${s.name}</div>
+        <div class="card-sub">${s.day}${s.date?' · '+s.date:''}</div>
+        <div class="card-tags">
+          ${s.activities.split('·').map(a=>`<span class="tag" style="background:${s.color}12;color:${s.color}">${a.trim()}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="card-body">${s.desc}</div>
+    <div class="card-transport">${s.transport}</div>
+    <div class="card-highlights">${hlHtml}</div>
+  `;
+
+  card.addEventListener('click',()=>{
+    document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
+    card.classList.add('active');
+    map.flyTo([s.lat,s.lng],10,{duration:1});
+    markers[i].openPopup();
+  });
+  sidebar.appendChild(card);
+
+  if(i < stops.length-1){
+    const conn = document.createElement('div');
+    conn.className='route-connector';
+    conn.innerHTML='<div class="dot"></div>';
+    sidebar.appendChild(conn);
+  }
+});
+
+// Map
+const map = L.map('map',{center:[24,102],zoom:6,zoomControl:false});
+L.control.zoom({position:'topright'}).addTo(map);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+  attribution:'&copy; OSM &copy; CARTO',maxZoom:19
+}).addTo(map);
+
+// Route lines by section with arrows
+const secColors = {start:'#c0392b',nw:'#2980b9',tea:'#27ae60',border:'#e74c3c'};
+const secStops = {};
+stops.forEach(s=>{
+  if(!secStops[s.sec]) secStops[s.sec]=[];
+  secStops[s.sec].push([s.lat,s.lng]);
+});
+Object.entries(secStops).forEach(([sec,pts])=>{
+  if(pts.length>1){
+    L.polyline(pts,{color:secColors[sec],weight:3.5,opacity:0.6,dashArray:'10,7',lineCap:'round'}).addTo(map);
+  }
+});
+
+// Connect sections
+const secOrder = ['start','nw','tea','border'];
+for(let i=0;i<secOrder.length-1;i++){
+  const from = secStops[secOrder[i]];
+  const to = secStops[secOrder[i+1]];
+  if(from && to){
+    L.polyline([from[from.length-1],to[0]],{
+      color:'#aaa',weight:2,opacity:0.35,dashArray:'4,8'
+    }).addTo(map);
+  }
+}
+
+// The one backtrack line (Shangri-La → Kunming → Pu'er) - highlight it differently
+const backtrackPts = [[27.8297,99.7069],[25.0389,102.7183],[22.7870,100.9720]];
+L.polyline(backtrackPts,{
+  color:'#ff9800',weight:2.5,opacity:0.4,dashArray:'3,8'
+}).addTo(map);
+// Add backtrack label
+const btMid = L.latLng(26.4,101.0);
+L.marker(btMid,{
+  icon:L.divIcon({
+    className:'',
+    html:'<div style="background:rgba(255,152,0,0.9);color:white;padding:3px 8px;border-radius:6px;font-size:9px;font-weight:700;font-family:Segoe UI,sans-serif;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.2)">⚠️ Only backtrack</div>',
+    iconSize:[100,20],iconAnchor:[50,10]
+  })
+}).addTo(map);
+
+// China-Vietnam border line
+L.polyline([
+  [22.85,102.1],[22.65,102.8],[22.55,103.5],[22.50,103.95],[22.45,104.5],[22.40,105.0],[22.35,105.5],[22.20,106.0],[21.90,106.5]
+],{color:'#c0392b',weight:1.5,opacity:0.2,dashArray:'3,6'}).addTo(map);
+
+// Direction arrows along route
+function addArrow(from,to,color){
+  const lat=(from[0]+to[0])/2, lng=(from[1]+to[1])/2;
+  const angle = Math.atan2(to[1]-from[1],to[0]-from[0])*180/Math.PI;
+  L.marker([lat,lng],{
+    icon:L.divIcon({
+      className:'',
+      html:`<div style="font-size:14px;color:${color};opacity:0.7;transform:rotate(${-angle+90}deg)">▼</div>`,
+      iconSize:[14,14],iconAnchor:[7,7]
+    })
+  }).addTo(map);
+}
+// Add arrows for key segments
+addArrow([25.0389,102.7183],[25.6065,100.2676],'#2980b9'); // KM→Dali
+addArrow([25.6700,100.1100],[26.8721,100.2299],'#2980b9'); // Dali→Lijiang
+addArrow([26.8721,100.2299],[27.1867,100.1100],'#2980b9'); // Lijiang→TLG
+addArrow([27.2100,100.0800],[27.8297,99.7069],'#8e44ad');  // TLG→Shangri-La
+addArrow([22.7870,100.9720],[22.0017,100.7977],'#27ae60'); // Pu'er→XSBN
+addArrow([22.0017,100.7977],[22.1731,99.9867],'#1d8348');  // XSBN→Jingmai
+addArrow([22.5077,103.9583],[22.4856,103.9706],'#e74c3c'); // Hekou→LaoCai
+addArrow([22.3363,103.8440],[21.0285,105.8542],'#c0392b'); // Sapa→Hanoi
+
+// Markers
+const markers = [];
+stops.forEach((s,i) => {
+  const icon = L.divIcon({
+    className:'custom-marker',
+    html:`<div class="m-pin" style="background:${s.color}">${i+1}</div>`,
+    iconSize:[32,32],iconAnchor:[16,16],popupAnchor:[0,-20]
+  });
+
+  let hlBadges = '';
+  if(s.highlights){
+    hlBadges = `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:3px">${s.highlights.map(h=>`<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:${s.color}15;color:${s.color};font-weight:600">${h}</span>`).join('')}</div>`;
+  }
+
+  const marker = L.marker([s.lat,s.lng],{icon}).addTo(map)
+    .bindPopup(`
+      <div class="pop">
+        <h3><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:${s.color};color:white;font-size:11px;font-weight:800;margin-right:6px;vertical-align:middle">${i+1}</span>${s.name}</h3>
+        <div class="pop-sub">${s.day}${s.date?' · '+s.date:''}</div>
+        <div class="pop-act" style="color:${s.color}">${s.activities}</div>
+        <div class="pop-desc">${s.desc}</div>
+        <div class="pop-tr">${s.transport}</div>
+        ${hlBadges}
+      </div>
+    `,{maxWidth:320});
+
+  marker.on('click',()=>{
+    document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
+    const card = document.getElementById(`card-${i}`);
+    card.classList.add('active');
+    card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  });
+  markers.push(marker);
+});
+
+// Fit bounds
+const allPts = stops.map(s=>[s.lat,s.lng]);
+map.fitBounds(L.latLngBounds(allPts).pad(0.12));
+</script>
 </body>
 </html>
